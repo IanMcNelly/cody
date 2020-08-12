@@ -25,6 +25,7 @@ class PullRequest < ApplicationRecord
   STATUS_APRICOT = "APRICOT: Too few reviewers are listed"
   STATUS_AVOCADO = "AVOCADO: PR does not meet super-review threshold"
   STATUS_PLUM = "PLUM: %{reviewers} %{verb_phrase} on this repository"
+  STATUS_BANANA = "BANANA: %{reviewers} %{verb_phrase} on this pull request, so cannot provide a review"
   STATUS_DELEGATED = "Review is delegated to #%{parent_number}"
   STATUS_SKIPPED = "Code reviewers were not assigned"
 

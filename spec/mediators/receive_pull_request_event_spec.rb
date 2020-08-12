@@ -36,6 +36,12 @@ RSpec.describe ReceivePullRequestEvent do
       ignore_labels: ignore_labels_setting
     )
     allow(Repository).to receive(:find_by_full_name).and_return(repo)
+
+    stub_request(:get, %r{https?://api.github.com/repos/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/pulls/\d+/commits}).to_return(
+      status: 200,
+      body: json_fixture("pull_request_commits", committer_login: SecureRandom.hex).to_json,
+      headers: {"Content-Type" => "application/json"}
+    )
   end
 
   describe "#perform" do

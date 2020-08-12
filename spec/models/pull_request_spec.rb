@@ -72,7 +72,7 @@ RSpec.describe PullRequest, type: :model do
       stub_request(:get, %r{https?://api.github.com/repos/#{pr.repository.owner}/#{pr.repository.name}/pulls/#{pr.number}/commits}).to_return(
         status: 200,
         headers: {"Content-Type" => "application/json"},
-        body: File.open(Rails.root.join("spec", "fixtures", "pull_request_commits.json"))
+        body: json_fixture("pull_request_commits", committer_login: "aergonaut").to_json
       )
     end
 

@@ -22,3 +22,11 @@ counted **before** generating reviewers.
 This error appears when you attempt to assign a user who is not a collaborator
 on the repository as a reviewer. Users must have the ability to view Pull
 Requests on a repository in order to be assigned as a reviewer.
+
+## Error Code: BANANA
+
+> BANANA: Comitters to a PR cannot be reviewers on that PR
+
+This error appears when a PR author adds a reviewer who committed one or more
+of the changes in that PR. The reviewer list must be changed to remove that reviewer
+or reviewers

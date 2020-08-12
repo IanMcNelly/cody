@@ -38,6 +38,27 @@ class CreateOrUpdatePullRequest
     # uniqueness by reviewer login
     check_box_pairs.uniq! { |pair| pair[1] }
 
+    # Check for committers assigning themselves for review
+    check_box_logins = check_box_pairs.map { |pair| pair[1] }
+    reviewers_who_are_committers = (check_box_logins & pr.commit_authors)
+    unless reviewers_who_are_committers.empty?
+      verb_phrase =
+        if reviewers_who_are_committers.count > 1
+          "are committers"
+        else
+          "is a committer"
+        end
+
+      reviewers = reviewers_who_are_committers.join(", ")
+      pr.update_status(
+        format(
+          PullRequest::STATUS_BANANA,
+          {reviewers: reviewers, verb_phrase: verb_phrase}
+        )
+      )
+      return
+    end
+
     minimum_reviewers_required = repository.read_setting("minimum_reviewers_required")
     if minimum_reviewers_required.present? &&
         check_box_pairs.count < minimum_reviewers_required

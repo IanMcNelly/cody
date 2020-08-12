@@ -7,6 +7,14 @@ RSpec.describe CreateOrUpdatePullRequest, type: :model do
     let(:head_sha) { payload["head"]["sha"] }
     let!(:repo) { FactoryBot.create :repository, owner: repo_full_name.split("/", 2)[0], name: repo_full_name.split("/", 2)[1] }
 
+    before do
+      stub_request(:get, "https://api.github.com/repos/baxterthehacker/public-repo/pulls/9876/commits").to_return(
+        status: 200,
+        body: json_fixture("pull_request_commits", committer_login: SecureRandom.hex).to_json,
+        headers: {"Content-Type" => "application/json"}
+      )
+    end
+
     context "linking to a parent PR" do
       let(:body) do
         "Reviewed in #1234"
@@ -143,6 +151,32 @@ RSpec.describe CreateOrUpdatePullRequest, type: :model do
       it "removes peer reviewers who were deleted manually but leaves generated reviewers" do
         CreateOrUpdatePullRequest.new.perform(payload)
         expect(pull_request.reviewers.map(&:login)).to contain_exactly(*expected_reviewers)
+      end
+    end
+
+    context "committer is added as a reviewer" do
+      let(:r1_name) { SecureRandom.hex }
+      let!(:body) do
+        "- [ ] @#{r1_name}"
+      end
+
+      before do
+        pr_9876 = json_fixture("pr", number: 9876, head_sha: head_sha)
+        stub_request(:get, "https://api.github.com/repos/baxterthehacker/public-repo/pulls/9876").to_return(
+          status: 200,
+          body: pr_9876.to_json,
+          headers: {"Content-Type" => "application/json"}
+        )
+        stub_request(:get, "https://api.github.com/repos/baxterthehacker/public-repo/pulls/9876/commits").to_return(
+          status: 200,
+          body: json_fixture("pull_request_commits", committer_login: r1_name).to_json,
+          headers: {"Content-Type" => "application/json"}
+        )
+      end
+
+      it "raises BANANA error that the committer cannot be a reviewer" do
+        expect_any_instance_of(PullRequest).to receive(:update_status).with("BANANA: #{r1_name} is a committer on this pull request, so cannot provide a review")
+        CreateOrUpdatePullRequest.new.perform(payload)
       end
     end
   end
